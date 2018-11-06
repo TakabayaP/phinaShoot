@@ -29,7 +29,7 @@ phina.define("GameScene",{
 phina.main(function(){
     let app=GameApp({
         startLabel:"PhinaSplash",
-        assets:Assets,
+        //assets:Assets,
         width:Assets.ScreenWidth,
         height:Assets.ScreenHeight,
         scenes:Assets.MyScenes,
