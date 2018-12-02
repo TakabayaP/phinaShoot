@@ -1,7 +1,7 @@
 "use strict";
 phina.globalize();
 const Conf={
-    Debug:false,
+    Debug:true,
     Fps:60,
     ScreenWidth:1500,
     ScreenHeight:960,
@@ -23,8 +23,13 @@ const Conf={
         target_stage:1,
     },
     Stages:[
-
-
+        
+        {
+            info:{
+                background:"Bg1"
+            }
+        }
+        
     ]
 };
 const Assets={
@@ -37,29 +42,46 @@ phina.define("GameScene",{
     init:function(options){
         this.superInit(options);
         this.options=options;
-        if(Conf.Debug)this.options.stage=Conf.DebugSettings.target_stage;
-        this.stageMap=Conf.Stages[this.options.stage];
-        console.log(new Background());
+        this.backgroundColor="black";
+        if(Conf.Debug)this.enableDebug();
+        this.stage=this.getStage(this.options.stage);
+        this.gameLayer=DisplayElement().addChildTo(this);
+        this.addBackground(this.gameLayer,this.stage.info.background);
+    },
+    enableDebug:function(){
+        this.options.stage=Conf.DebugSettings.target_stage;
+    },
+    getStage:stage=>Conf.Stages[stage-1],
+    addBackground:function(parent,image){
+        let backGrounds=[];
+        for(let i=0;i<=2;i++){
+            backGrounds.push(new Background(image).addChildTo(parent));
+            backGrounds[i].setPosition(0,Conf.PlayAreaHeight-backGrounds[i].height*i);
+        }
     }
 });
 phina.define("Background",{
     superClass:"Sprite",
     init:function(options){
+        var options = (options || {}).$safe(Background.defaults);
         this.superInit("Bg1");//options.image);
-        //this.width=options.width;
-        //this.height=options.height;
+        this.width=Conf.PlayAreaWidth;
         this.setOrigin(0,1);
     },
     _static:{
         defaults:{
-            width:Conf.PlayAreaWidth,
-            height:this._height*(Conf.PlayAreaWidth/this._width),
         }
-    }
+    },
+    update:function(a){
+        this.y+=Conf.ScrollSpeed;
+        if(this.y>=this.height+Conf.PlayAreaHeight){
+            this.y=Conf.PlayAreaHeight-this.height;
+        }
+    },
 });
 phina.main(function(){
     let app=GameApp({
-        startLabel:"PhinaSplash",
+        startLabel:!Conf.Debug?"PhinaSplash":"Game",
         assets:Assets,
         width:Conf.ScreenWidth,
         height:Conf.ScreenHeight,
