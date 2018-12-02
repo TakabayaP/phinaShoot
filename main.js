@@ -1,5 +1,6 @@
 "use strict";
 phina.globalize();
+//Constants
 const Conf={
     Debug:true,
     Fps:60,
@@ -34,9 +35,12 @@ const Conf={
 };
 const Assets={
     image:{
-        Bg1:"img/back2.png"
+        Bg1:"img/back2.png",
+        P1:"img/player1.png",
+        P2:"img/player2.png",
     },
 };
+//Scenes
 phina.define("GameScene",{
     superClass:"DisplayScene",
     init:function(options){
@@ -46,25 +50,41 @@ phina.define("GameScene",{
         if(Conf.Debug)this.enableDebug();
         this.stage=this.getStage(this.options.stage);
         this.gameLayer=DisplayElement().addChildTo(this);
+        this.uiLayer = DisplayElement().addChildTo(this);
         this.addBackground(this.gameLayer,this.stage.info.background);
+        this.addUiBackground(this.uiLayer);
     },
     enableDebug:function(){
         this.options.stage=Conf.DebugSettings.target_stage;
     },
     getStage:stage=>Conf.Stages[stage-1],
-    addBackground:function(parent,image){
+    addBackground:(parent,image)=>{
         let backGrounds=[];
-        for(let i=0;i<=2;i++){
-            backGrounds.push(new Background(image).addChildTo(parent));
+        for(let i=0;i<=1;i++){
+            backGrounds.push(new Background({image:image}).addChildTo(parent));
             backGrounds[i].setPosition(0,Conf.PlayAreaHeight-backGrounds[i].height*i);
         }
+    },
+    addUiBackground:function(parent){
+        let grad = Canvas.createLinearGradient(0, 300, 0,-200);
+        grad.addColorStop(0,"black");
+        grad.addColorStop(1,"#2727A4");
+        this.uiBack=RectangleShape({
+            x:Conf.PlayAreaHeight-8,
+            y:-10,
+            width:Conf.ScreenWidth-Conf.PlayAreaWidth,
+            height:Conf.ScreenHeight+10,
+            fill:grad,
+            strokeWidth:0,
+        }).setOrigin(0,0).addChildTo(parent);
     }
 });
+//Other Components
 phina.define("Background",{
     superClass:"Sprite",
     init:function(options){
-        var options = (options || {}).$safe(Background.defaults);
-        this.superInit("Bg1");//options.image);
+        this.options=(options||{}).$safe(Background.defaults);
+        this.superInit(options.image);
         this.width=Conf.PlayAreaWidth;
         this.setOrigin(0,1);
     },
@@ -72,13 +92,35 @@ phina.define("Background",{
         defaults:{
         }
     },
-    update:function(a){
+    update:function(){
         this.y+=Conf.ScrollSpeed;
         if(this.y>=this.height+Conf.PlayAreaHeight){
             this.y=Conf.PlayAreaHeight-this.height;
         }
     },
 });
+phina.define("Player",{
+    superClass:"Sprite",
+    init:function(){
+        this.options=(options||{}).$safe(Player.defaults);
+    },
+    _static:{
+        defaults:{
+            no:0,
+            keys:{
+                slow:["shift","shift"],
+                right:["right","d"],
+                left:["left","a"],
+                up:["up","w"],
+                down:["down","s"],
+            },
+            images:{
+                player:["P1","P2"]
+            }
+        }
+    }
+});
+//Main
 phina.main(function(){
     let app=GameApp({
         startLabel:!Conf.Debug?"PhinaSplash":"Game",
