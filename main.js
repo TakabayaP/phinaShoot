@@ -10,7 +10,7 @@ const Conf={
     PlayAreaHeight:1000,
     ScrollSpeed:15,
     GameGrid:Grid({
-        width:PlayAreaHeight,
+        width:1000,
         columns:17,
     }),
     MyScenes:[
@@ -57,6 +57,7 @@ phina.define("GameScene",{
         this.uiLayer = DisplayElement().addChildTo(this);
         this.addBackground(this.gameLayer,this.stage.info.background);
         this.addUiBackground(this.uiLayer);
+        Player().addChildTo(this);
     },
     enableDebug:function(){
         this.options.stage=Conf.DebugSettings.target_stage;
@@ -105,14 +106,33 @@ phina.define("Background",{
 });
 phina.define("Player",{
     superClass:"Sprite",
-    init:function(){
+    init:function(options){
         this.options=(options||{}).$safe(Player.defaults);
         this.superInit(this.options.images.player[this.options.no]);
-
+        this.setPosition(
+            Conf.GameGrid.center(this.options.initialPositions[this.options.players-1][this.options.no][0]),
+            Conf.GameGrid.center(this.options.initialPositions[this.options.players-1][this.options.no][1]));
+    },
+    update:function(app){
+        this.move(app);
+    },
+    move:function(app){
+        let key=app.keyboard,keys=this.options.keys,speed=this.options.speed,n=this.options.no;
+        if(key.getKey(keys.right[n])){
+            console.log("right");
+            if(this.right+speed<Conf.PlayAreaWidth)this.x+=speed;
+            else this.right=Conf.PlayAreaWidth;
+        }       
+        if(key.getKey(keys.left[n])){
+            if(this.left-speed>0)this.x-=speed;
+            else this.left=0;
+        }
     },
     _static:{
         defaults:{
             no:0,
+            players:1,
+            speed:13,
             keys:{
                 slow:["shift","shift"],
                 right:["right","d"],
@@ -123,8 +143,10 @@ phina.define("Player",{
             images:{
                 player:["P1","P2"]
             },
-            initialPosition:[
-                []//grids
+            initialPositions:[
+                [[0,3]],
+                [[-3,-3],[3,-3]],
+                //gridCenter
             ]
         }
     }
