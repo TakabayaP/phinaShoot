@@ -9,6 +9,10 @@ const Conf={
     PlayAreaWidth:1000,
     PlayAreaHeight:1000,
     ScrollSpeed:15,
+    GameGrid:Grid({
+        width:PlayAreaHeight,
+        columns:17,
+    }),
     MyScenes:[
         {
             label:"PhinaSplash",
@@ -103,6 +107,8 @@ phina.define("Player",{
     superClass:"Sprite",
     init:function(){
         this.options=(options||{}).$safe(Player.defaults);
+        this.superInit(this.options.images.player[this.options.no]);
+
     },
     _static:{
         defaults:{
@@ -116,7 +122,10 @@ phina.define("Player",{
             },
             images:{
                 player:["P1","P2"]
-            }
+            },
+            initialPosition:[
+                []//grids
+            ]
         }
     }
 });
