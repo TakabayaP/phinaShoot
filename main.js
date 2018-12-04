@@ -5,7 +5,7 @@ const Conf={
     Debug:true,
     Fps:60,
     ScreenWidth:1500,
-    ScreenHeight:960,
+    ScreenHeight:1000,
     PlayAreaWidth:1000,
     PlayAreaHeight:1000,
     ScrollSpeed:15,
@@ -28,7 +28,6 @@ const Conf={
         target_stage:1,
     },
     Stages:[
-        
         {
             info:{
                 background:"Bg1"
@@ -39,9 +38,10 @@ const Conf={
 };
 const Assets={
     image:{
-        Bg1:"img/back2.png",
+        Bg1:"img/backgray.png",
         P1:"img/player1.png",
         P2:"img/player2.png",
+        PlayerBullet1:"img/bullets/own_bullet_big.png"
     },
 };
 //Scenes
@@ -54,8 +54,9 @@ phina.define("GameScene",{
         if(Conf.Debug)this.enableDebug();
         this.stage=this.getStage(this.options.stage);
         this.gameLayer=DisplayElement().addChildTo(this);
-        this.uiLayer = DisplayElement().addChildTo(this);
         this.addBackground(this.gameLayer,this.stage.info.background);
+        this.uiLayer=DisplayElement().addChildTo(this);
+        this.playerBulletLayer=DisplayElement().addChildTo(this.gameLayer);
         this.addUiBackground(this.uiLayer);
         Player().addChildTo(this);
     },
@@ -115,6 +116,8 @@ phina.define("Player",{
     },
     update:function(app){
         this.move(app);
+        console.log(app.currentScene[this.options.bullet.bulletLayer]);
+        if(app.frame%(Conf.Fps/5)===0)this.shoot(app.currentScene[this.options.bullet.bulletLayer]);
     },
     move:function(app){
         let key=app.keyboard,keys=this.options.keys,speed=this.options.speed,n=this.options.no;
@@ -127,12 +130,27 @@ phina.define("Player",{
             if(this.left-speed>0)this.x-=speed;
             else this.left=0;
         }
+        if(key.getKey(keys.up[n])){
+            if(this.top-speed>0)this.y-=speed;
+            else this.top=0;
+        }
+        if(key.getKey(keys.down[n])){
+            if(this.bottom+speed<Conf.PlayAreaHeight)this.y+=speed;
+            else this.bottom=Conf.PlayAreaHeight;
+            console.log(this.bottom);
+        }
+    },
+    shoot:function(parent){
+        PlayerBullet(this.x,this.y).addChildTo(parent);
     },
     _static:{
         defaults:{
             no:0,
             players:1,
             speed:13,
+            bullet:{
+                bulletLayer:"playerBulletLayer",
+            },
             keys:{
                 slow:["shift","shift"],
                 right:["right","d"],
@@ -148,6 +166,27 @@ phina.define("Player",{
                 [[-3,-3],[3,-3]],
                 //gridCenter
             ]
+        }
+    }
+});
+phina.define("PlayerBullet",{
+    superClass:"Sprite",
+    init:function(x,y,options){
+        this.options=(options||{}).$safe(PlayerBullet.defaults);
+        this.superInit(options.image);
+        this.width=options.width;
+        this.speed=options.speed;
+        this.setPosition(x,y);
+    },
+    update:function(){
+        this.y-=this.speed;
+        (this.left>Conf.PlayAreaWidth||this.right<0||this.top>Conf.PlayAreaHeight||this.bottom<0)&&this.remove();
+    },
+    _static:{
+        defaults:{
+            image:"PlayerBullet1",
+            speed:35,
+            width:10,
         }
     }
 });
