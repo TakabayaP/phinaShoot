@@ -82,6 +82,8 @@ phina.define("GameScene",{
             fill:grad,
             strokeWidth:0,
         }).setOrigin(0,0).addChildTo(parent);
+    },
+    addPlayer:function(){
     }
 });
 //Other Components
@@ -119,13 +121,20 @@ phina.define("Player",{
     move:function(app){
         let key=app.keyboard,keys=this.options.keys,speed=this.options.speed,n=this.options.no;
         if(key.getKey(keys.right[n])){
-            console.log("right");
             if(this.right+speed<Conf.PlayAreaWidth)this.x+=speed;
             else this.right=Conf.PlayAreaWidth;
         }       
         if(key.getKey(keys.left[n])){
             if(this.left-speed>0)this.x-=speed;
             else this.left=0;
+        }
+        if(key.getKey(keys.up[n])){
+            if(this.up-speed>0)this.x-=speed;
+            else this.up=0;
+        }
+        if(key.getKey(keys.down)){
+            if(this.down+speed<Conf.PlayAreaHeight)this.y+=speed;
+            else this.down=Conf.PlayAreaHeight;
         }
     },
     _static:{
