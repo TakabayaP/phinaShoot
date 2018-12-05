@@ -116,13 +116,11 @@ phina.define("Player",{
     },
     update:function(app){
         this.move(app);
-        console.log(app.currentScene[this.options.bullet.bulletLayer]);
         if(app.frame%(Conf.Fps/5)===0)this.shoot(app.currentScene[this.options.bullet.bulletLayer]);
     },
     move:function(app){
         let key=app.keyboard,keys=this.options.keys,speed=this.options.speed,n=this.options.no;
         if(key.getKey(keys.right[n])){
-            console.log("right");
             if(this.right+speed<Conf.PlayAreaWidth)this.x+=speed;
             else this.right=Conf.PlayAreaWidth;
         }       
@@ -137,11 +135,13 @@ phina.define("Player",{
         if(key.getKey(keys.down[n])){
             if(this.bottom+speed<Conf.PlayAreaHeight)this.y+=speed;
             else this.bottom=Conf.PlayAreaHeight;
-            console.log(this.bottom);
         }
     },
     shoot:function(parent){
-        PlayerBullet(this.x,this.y).addChildTo(parent);
+        for(let i=1;i<=this.options.bullet.bulletNumber/2;i++){
+            PlayerBullet(this.x-this.options.bullet.bulletInterval*i,this.y).addChildTo(parent);
+            PlayerBullet(this.x+this.options.bullet.bulletInterval*i,this.y).addChildTo(parent);
+        }
     },
     _static:{
         defaults:{
@@ -149,6 +149,8 @@ phina.define("Player",{
             players:1,
             speed:13,
             bullet:{
+                bulletInterval:10,
+                bulletNumber:4,
                 bulletLayer:"playerBulletLayer",
             },
             keys:{
@@ -173,9 +175,9 @@ phina.define("PlayerBullet",{
     superClass:"Sprite",
     init:function(x,y,options){
         this.options=(options||{}).$safe(PlayerBullet.defaults);
-        this.superInit(options.image);
-        this.width=options.width;
-        this.speed=options.speed;
+        this.superInit(this.options.image);
+        this.width=this.options.width;
+        this.speed=this.options.speed;
         this.setPosition(x,y);
     },
     update:function(){
