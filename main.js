@@ -9,6 +9,7 @@ const Conf={
     PlayAreaWidth:1000,
     PlayAreaHeight:1000,
     ScrollSpeed:15,
+    heartRadius:5,
     GameGrid:Grid({
         width:1000,
         columns:17,
@@ -48,8 +49,9 @@ const Assets={
 phina.define("GameScene",{
     superClass:"DisplayScene",
     init:function(options){
-        this.superInit(options);
-        this.options=options;
+        this.options=(options||{}).$safe(GameScene.defaults);
+        this.superInit(this.options);
+        this.players=[];
         this.backgroundColor="black";
         if(Conf.Debug)this.enableDebug();
         this.stage=this.getStage(this.options.stage);
@@ -58,7 +60,7 @@ phina.define("GameScene",{
         this.uiLayer=DisplayElement().addChildTo(this);
         this.playerBulletLayer=DisplayElement().addChildTo(this.gameLayer);
         this.addUiBackground(this.uiLayer);
-        Player().addChildTo(this);
+        this.addPlayers(this.gameLayer);
     },
     enableDebug:function(){
         this.options.stage=Conf.DebugSettings.target_stage;
@@ -83,9 +85,23 @@ phina.define("GameScene",{
             fill:grad,
             strokeWidth:0,
         }).setOrigin(0,0).addChildTo(parent);
+    },
+    addPlayers:function(parent){
+        for(let i=0;i<this.options.playerNumber;i++){
+            Player({
+                no:i,
+                players:this.options.playerNumber,
+            }).addChildTo(parent).addHeart(parent);
+        }
+
+    },
+    _static:{
+        defaults:{
+            playerNumber:2,
+        }
     }
 });
-//Other Components
+//Components
 phina.define("Background",{
     superClass:"Sprite",
     init:function(options){
@@ -113,6 +129,7 @@ phina.define("Player",{
         this.setPosition(
             Conf.GameGrid.center(this.options.initialPositions[this.options.players-1][this.options.no][0]),
             Conf.GameGrid.center(this.options.initialPositions[this.options.players-1][this.options.no][1]));
+        //this.addHeart(this.parent);
     },
     update:function(app){
         this.move(app);
@@ -143,6 +160,9 @@ phina.define("Player",{
             PlayerBullet(this.x+this.options.bullet.bulletInterval*i,this.y).addChildTo(parent);
         }
     },
+    addHeart:function(parent){
+        this.heart=Heart(this).addChildTo(parent);
+    },
     _static:{
         defaults:{
             no:0,
@@ -169,6 +189,19 @@ phina.define("Player",{
                 //gridCenter
             ]
         }
+    }
+});
+phina.define("Heart",{
+    superClass:"CircleShape",
+    init:function(player){
+        this.superInit();
+        this.player=player;
+        this.radius=Conf.heartRadius;
+        this.fill="#850101";
+        this.strokeWidth=0;
+    },
+    update:function(){
+        this.setPosition(this.player.x,this.player.y);
     }
 });
 phina.define("PlayerBullet",{
