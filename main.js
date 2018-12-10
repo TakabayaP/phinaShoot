@@ -5,10 +5,11 @@ const Conf={
     Debug:true,
     Fps:60,
     ScreenWidth:1500,
-    ScreenHeight:960,
+    ScreenHeight:1000,
     PlayAreaWidth:1000,
     PlayAreaHeight:1000,
     ScrollSpeed:15,
+    heartRadius:5,
     GameGrid:Grid({
         width:1000,
         columns:17,
@@ -28,7 +29,6 @@ const Conf={
         target_stage:1,
     },
     Stages:[
-        
         {
             info:{
                 background:"Bg1"
@@ -39,25 +39,28 @@ const Conf={
 };
 const Assets={
     image:{
-        Bg1:"img/back2.png",
+        Bg1:"img/backgray.png",
         P1:"img/player1.png",
         P2:"img/player2.png",
+        PlayerBullet1:"img/bullets/own_bullet_big.png"
     },
 };
 //Scenes
 phina.define("GameScene",{
     superClass:"DisplayScene",
     init:function(options){
-        this.superInit(options);
-        this.options=options;
+        this.options=(options||{}).$safe(GameScene.defaults);
+        this.superInit(this.options);
+        this.players=[];
         this.backgroundColor="black";
         if(Conf.Debug)this.enableDebug();
         this.stage=this.getStage(this.options.stage);
         this.gameLayer=DisplayElement().addChildTo(this);
-        this.uiLayer = DisplayElement().addChildTo(this);
         this.addBackground(this.gameLayer,this.stage.info.background);
+        this.uiLayer=DisplayElement().addChildTo(this);
+        this.playerBulletLayer=DisplayElement().addChildTo(this.gameLayer);
         this.addUiBackground(this.uiLayer);
-        Player().addChildTo(this);
+        this.addPlayers(this.gameLayer);
     },
     enableDebug:function(){
         this.options.stage=Conf.DebugSettings.target_stage;
@@ -83,10 +86,22 @@ phina.define("GameScene",{
             strokeWidth:0,
         }).setOrigin(0,0).addChildTo(parent);
     },
-    addPlayer:function(){
+    addPlayers:function(parent){
+        for(let i=0;i<this.options.playerNumber;i++){
+            Player({
+                no:i,
+                players:this.options.playerNumber,
+            }).addChildTo(parent).addHeart(parent);
+        }
+
+    },
+    _static:{
+        defaults:{
+            playerNumber:2,
+        }
     }
 });
-//Other Components
+//Components
 phina.define("Background",{
     superClass:"Sprite",
     init:function(options){
@@ -114,9 +129,11 @@ phina.define("Player",{
         this.setPosition(
             Conf.GameGrid.center(this.options.initialPositions[this.options.players-1][this.options.no][0]),
             Conf.GameGrid.center(this.options.initialPositions[this.options.players-1][this.options.no][1]));
+        //this.addHeart(this.parent);
     },
     update:function(app){
         this.move(app);
+        if(app.frame%(Conf.Fps/5)===0)this.shoot(app.currentScene[this.options.bullet.bulletLayer]);
     },
     move:function(app){
         let key=app.keyboard,keys=this.options.keys,speed=this.options.speed,n=this.options.no;
@@ -129,19 +146,33 @@ phina.define("Player",{
             else this.left=0;
         }
         if(key.getKey(keys.up[n])){
-            if(this.up-speed>0)this.x-=speed;
-            else this.up=0;
+            if(this.top-speed>0)this.y-=speed;
+            else this.top=0;
         }
-        if(key.getKey(keys.down)){
-            if(this.down+speed<Conf.PlayAreaHeight)this.y+=speed;
-            else this.down=Conf.PlayAreaHeight;
+        if(key.getKey(keys.down[n])){
+            if(this.bottom+speed<Conf.PlayAreaHeight)this.y+=speed;
+            else this.bottom=Conf.PlayAreaHeight;
         }
+    },
+    shoot:function(parent){
+        for(let i=1;i<=this.options.bullet.bulletNumber/2;i++){
+            PlayerBullet(this.x-this.options.bullet.bulletInterval*i,this.y).addChildTo(parent);
+            PlayerBullet(this.x+this.options.bullet.bulletInterval*i,this.y).addChildTo(parent);
+        }
+    },
+    addHeart:function(parent){
+        this.heart=Heart(this).addChildTo(parent);
     },
     _static:{
         defaults:{
             no:0,
             players:1,
             speed:13,
+            bullet:{
+                bulletInterval:10,
+                bulletNumber:4,
+                bulletLayer:"playerBulletLayer",
+            },
             keys:{
                 slow:["shift","shift"],
                 right:["right","d"],
@@ -157,6 +188,40 @@ phina.define("Player",{
                 [[-3,-3],[3,-3]],
                 //gridCenter
             ]
+        }
+    }
+});
+phina.define("Heart",{
+    superClass:"CircleShape",
+    init:function(player){
+        this.superInit();
+        this.player=player;
+        this.radius=Conf.heartRadius;
+        this.fill="#850101";
+        this.strokeWidth=0;
+    },
+    update:function(){
+        this.setPosition(this.player.x,this.player.y);
+    }
+});
+phina.define("PlayerBullet",{
+    superClass:"Sprite",
+    init:function(x,y,options){
+        this.options=(options||{}).$safe(PlayerBullet.defaults);
+        this.superInit(this.options.image);
+        this.width=this.options.width;
+        this.speed=this.options.speed;
+        this.setPosition(x,y);
+    },
+    update:function(){
+        this.y-=this.speed;
+        (this.left>Conf.PlayAreaWidth||this.right<0||this.top>Conf.PlayAreaHeight||this.bottom<0)&&this.remove();
+    },
+    _static:{
+        defaults:{
+            image:"PlayerBullet1",
+            speed:35,
+            width:10,
         }
     }
 });
