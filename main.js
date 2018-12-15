@@ -14,6 +14,7 @@ const Conf = {
         width:1000,
         columns:17,
     }),
+    LabelAnimationTime:1,
     MyScenes:[
         {
             label:"PhinaSplash",
@@ -45,6 +46,11 @@ const Assets = {
         Enemy1:"img/enemies/enemy1.png",
         PlayerBullet1:"img/bullets/own_bullet_big.png"
     },
+    font:{
+        //"arcadia":"font/arcadia.ttf",
+        "square":"font/Square.ttf",
+        //"misakigothic":"font/misaki_gothic.ttf",
+    },
 };
 //Scenes
 phina.define("GameScene",{
@@ -66,6 +72,7 @@ phina.define("GameScene",{
     },
     debug:function() {
         Enemy().addChildTo(this.gameLayer).setPosition(Conf.GameGrid.center(),Conf.GameGrid.center());
+        StageLabel("test").addChildTo(this.uiLayer);
     },
     enableDebug:function() {
         this.options.stage = Conf.DebugSettings.target_stage;
@@ -254,6 +261,27 @@ phina.define("PlayerBullet",{
             speed:35,
             width:10,
         }
+    }
+});
+//UIs
+phina.define("StageLabel", {
+    superClass: "Label",
+    init: function (stageName) {
+        this.superInit(stageName);
+        this.setPosition(Conf.GameGrid.center(),Conf.GameGrid.center());
+        this.fontSize = 200;
+        this.fontFamily = "Square";
+        this.fill = "white";
+        this.strokeWidth = 1111111;
+        this.alpha = 0;
+        //log.log("breaking into " + text);
+        this.tweener.
+            clear().
+            fadeIn(Conf.LabelAnimationTime * 250).
+            wait(Conf.LabelAnimationTime * 750).
+            to({left:(Conf.ScreenWidth + Conf.PlayAreaWidth) / 2 - 50,y:0 + 70,fontSize:100},Conf.LabelAnimationTime * 2000,"easeOutCubic");
+        //fadeOut(Conf.LabelAnimationTime * 250);
+
     }
 });
 //Main
