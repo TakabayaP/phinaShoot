@@ -55,7 +55,7 @@ const Assets = {
 //Scenes
 phina.define("GameScene",{
     superClass:"DisplayScene",
-    init:function(options) {
+    init(options) {
         this.options = (options || {}).$safe(GameScene.defaults);
         this.superInit(this.options);
         this.players = [];
@@ -70,11 +70,13 @@ phina.define("GameScene",{
         this.addPlayers(this.gameLayer);
         this.debug();
     },
-    debug:function() {
+    debug() {
         Enemy().addChildTo(this.gameLayer).setPosition(Conf.GameGrid.center(),Conf.GameGrid.center());
         StageLabel("test").addChildTo(this.uiLayer);
+        //KeyMap(this.players).addChildTo(this.uiLayer);
+        this.console = MyConsole().addChildTo(this.uiLayer);
     },
-    enableDebug:function() {
+    enableDebug() {
         this.options.stage = Conf.DebugSettings.target_stage;
     },
     getStage:stage=>Conf.Stages[stage - 1],
@@ -85,7 +87,7 @@ phina.define("GameScene",{
             backGrounds[i].setPosition(0,Conf.PlayAreaHeight - backGrounds[i].height * i);
         }
     },
-    addUiBackground:function(parent) {
+    addUiBackground(parent) {
         let grad = Canvas.createLinearGradient(0, 300, 0,-200);
         grad.addColorStop(0,"black");
         grad.addColorStop(1,"#2727A4");
@@ -98,14 +100,16 @@ phina.define("GameScene",{
             strokeWidth:0,
         }).setOrigin(0,0).addChildTo(parent);
     },
-    addPlayers:function(parent) {
+    addPlayers(parent) {
         for(let i = 0;i < this.options.playerNumber;i++) {
-            Player({
+            this.players[i] = Player({
                 no:i,
                 players:this.options.playerNumber,
             }).addChildTo(parent).addHeart(parent);
         }
-
+    },
+    update(app) {
+        this.console.log(app.frame);
     },
     _static:{
         defaults:{
@@ -116,7 +120,7 @@ phina.define("GameScene",{
 //Components
 phina.define("Background",{
     superClass:"Sprite",
-    init:function(options) {
+    init(options) {
         this.options = (options || {}).$safe(Background.defaults);
         this.superInit(options.image);
         this.width = Conf.PlayAreaWidth;
@@ -126,7 +130,7 @@ phina.define("Background",{
         defaults:{
         }
     },
-    update:function() {
+    update() {
         this.y += Conf.ScrollSpeed;
         if(this.y >= this.height + Conf.PlayAreaHeight) {
             this.y = Conf.PlayAreaHeight - this.height;
@@ -135,7 +139,7 @@ phina.define("Background",{
 });
 phina.define("Player",{
     superClass:"Sprite",
-    init:function(options) {
+    init(options) {
         this.options = (options || {}).$safe(Player.defaults);
         this.superInit(this.options.images.player[this.options.no]);
         this.setPosition(
@@ -143,11 +147,11 @@ phina.define("Player",{
             Conf.GameGrid.center(this.options.initialPositions[this.options.players - 1][this.options.no][1]));
         //this.addHeart(this.parent);
     },
-    update:function(app) {
+    update(app) {
         this.move(app);
         if(app.frame % (Conf.Fps / 5) === 0)this.shoot(app.currentScene[this.options.bullet.bulletLayer]);
     },
-    move:function({keyboard:key}) {
+    move({keyboard:key}) {
         const{keys,speed,no:n} = this.options;
         if(key.getKey(keys.right[n])) {
             if(this.right + speed < Conf.PlayAreaWidth)this.x += speed;
@@ -166,13 +170,13 @@ phina.define("Player",{
             else this.bottom = Conf.PlayAreaHeight;
         }
     },
-    shoot:function(parent) {
+    shoot(parent) {
         for(let i = 1;i <= this.options.bullet.bulletNumber / 2;i++) {
             PlayerBullet(this.x - this.options.bullet.bulletInterval * i,this.y).addChildTo(parent);
             PlayerBullet(this.x + this.options.bullet.bulletInterval * i,this.y).addChildTo(parent);
         }
     },
-    addHeart:function(parent) {
+    addHeart(parent) {
         this.heart = Heart(this).addChildTo(parent);
     },
     _static:{
@@ -205,7 +209,7 @@ phina.define("Player",{
 });
 phina.define("Enemy",{
     superClass:"Sprite",
-    init:function() {
+    init() {
         this.superInit("Enemy1");
     },
     setGauge() {
@@ -231,27 +235,27 @@ phina.define("Enemy",{
 });
 phina.define("Heart",{
     superClass:"CircleShape",
-    init:function(player) {
+    init(player) {
         this.superInit();
         this.player = player;
         this.radius = Conf.heartRadius;
         this.fill = "#850101";
         this.strokeWidth = 0;
     },
-    update:function() {
+    update() {
         this.setPosition(this.player.x,this.player.y);
     }
 });
 phina.define("PlayerBullet",{
     superClass:"Sprite",
-    init:function(x,y,options) {
+    init(x,y,options) {
         this.options = (options || {}).$safe(PlayerBullet.defaults);
         this.superInit(this.options.image);
         this.width = this.options.width;
         this.speed = this.options.speed;
         this.setPosition(x,y);
     },
-    update:function() {
+    update() {
         this.y -= this.speed;
         (this.left > Conf.PlayAreaWidth || this.right < 0 || this.top > Conf.PlayAreaHeight || this.bottom < 0) && this.remove();
     },
@@ -266,7 +270,7 @@ phina.define("PlayerBullet",{
 //UIs
 phina.define("StageLabel", {
     superClass: "Label",
-    init: function (stageName) {
+    init(stageName) {
         this.superInit(stageName);
         this.setPosition(Conf.GameGrid.center(),Conf.GameGrid.center());
         this.fontSize = 200;
@@ -282,6 +286,41 @@ phina.define("StageLabel", {
             to({left:(Conf.ScreenWidth + Conf.PlayAreaWidth) / 2 - 50,y:0 + 70,fontSize:100},Conf.LabelAnimationTime * 2000,"easeOutCubic");
         //fadeOut(Conf.LabelAnimationTime * 250);
 
+    }
+});
+phina.define("KeyMap",{
+    superClass:"DisplayElement",
+    init(players) {
+        this.keys;
+    }
+});
+phina.define("MyConsole",{
+    superClass:"Label",
+    init:function() {
+        this.superInit({
+            fill:"white",
+            fontFamily:"square",
+            fontSize:15,
+            origin:{
+                x:0,
+                y:0,
+            }
+        });
+        this.logs = [];
+        this.maxLog = 15;
+        this.setPosition(Conf.PlayAreaWidth,Conf.PlayAreaHeight - 17 * this.maxLog);
+        this.setOrigin(0,0);
+        this.reload();
+    },
+    log(text) {
+        if(this.logs.length > this.maxLog)this.logs.shift();
+        this.logs.push(text);
+        this.reload();
+    },
+    reload() {
+        this.text = "";
+        for(let s in this.logs)this.text += this.logs[this.logs.length - s - 1] + "\n";
+        console.log(this.logs);
     }
 });
 //Main
