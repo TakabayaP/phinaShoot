@@ -21,6 +21,10 @@ const Conf = {
             className:"SplashScene"
         },
         {
+            label:"MainMenu",
+            className:"MainMenuScene"
+        },
+        {
             label:"Game",
             className:"GameScene",
         }
@@ -28,6 +32,7 @@ const Conf = {
     DebugSettings:{
         log_path:"",
         target_stage:1,
+        target_scene:"MainMenu"
     },
     Stages:[
         {
@@ -47,9 +52,9 @@ const Assets = {
         PlayerBullet1:"img/bullets/own_bullet_big.png"
     },
     font:{
-        //"arcadia":"font/arcadia.ttf",
+        "arcadia":"font/arcadia.ttf",
         "square":"font/Square.ttf",
-        //"misakigothic":"font/misaki_gothic.ttf",
+        "misakigothic":"font/misaki_gothic.ttf",
     },
 };
 //Scenes
@@ -68,7 +73,7 @@ phina.define("GameScene",{
         this.playerBulletLayer = DisplayElement().addChildTo(this.gameLayer);
         this.addUiBackground(this.uiLayer);
         this.addPlayers(this.gameLayer);
-        this.debug();
+        if(Conf.Debug)this.debug();
     },
     debug() {
         Enemy().addChildTo(this.gameLayer).setPosition(Conf.GameGrid.center(),Conf.GameGrid.center());
@@ -115,6 +120,73 @@ phina.define("GameScene",{
         defaults:{
             playerNumber:2,
         }
+    }
+});
+phina.define("MainMenuScene",{
+    superClass:"DisplayScene",
+    init(options) {
+        this.superInit(options);
+        this.selectedNum = 0;
+        this.createBackground("black","#2727A4");
+        this.addTitle();
+        this.addMenu([["Start","StageSelect"]]);
+        this.setAnimation();    
+    },
+    createBackground(colour1,colour2) {
+        const grad = Canvas.createLinearGradient(0, 0, 0,Conf.ScreenHeight);
+        grad.addColorStop(0.5, colour1);
+        grad.addColorStop(1, colour2);
+        this.backgroundColor = grad;
+    },
+    addTitle() {
+        this.title = Label({
+            text:"REBELLION FORCE",
+            fill:"yellow",
+            fontFamily:"arcadia",
+            fontSize:80,
+            x:this.gridX.center(),
+            y:this.gridY.span(2),
+        }).addChildTo(this);
+        this.subTitle = Label({
+            text:"BETA",
+            fill:"white",
+            fontSize:60,
+            fontFamily:"misakigothic",
+            x:this.gridX.center(),
+            y:this.gridY.span(4),
+        }).addChildTo(this);
+    },
+    addMenu(menuList) {
+        this.labels = [];
+        for(let i in menuList) {
+            this.labels[i] = Label({
+                text:menuList[i][0],
+                align:"center",
+                fill:"white",
+                fontSize:80,
+                fontFamily:"square",
+                width:500,  
+                x:this.gridX.center(),
+                y:this.gridY.span(7 + i * 3),
+            }).addChildTo(this);
+        }
+        this.pointer = TriangleShape({
+            fill:"blue",
+            radius:30,
+            x:this.labels[this.selectedNum].left,
+            y:this.labels[this.selectedNum].y,
+            rotation:90,
+            origin:(1,0.5),
+            stroke:"transparent",
+        }).addChildTo(this);
+    },
+    setAnimation() {
+        this.title.tweener.clear()
+            .call(()=>this.title.alpha = 0,this.subTitle.alpha = 0)
+            .fadeIn(3000)
+            .call(()=>this.subTitle.tweener.fadeIn(1000));
+        
+        this.pointer.tweener.fadeOut(250).fadeIn(250).setLoop(true);
     }
 });
 //Components
@@ -276,16 +348,12 @@ phina.define("StageLabel", {
         this.fontSize = 200;
         this.fontFamily = "Square";
         this.fill = "white";
-        this.strokeWidth = 1111111;
         this.alpha = 0;
-        //log.log("breaking into " + text);
         this.tweener.
             clear().
             fadeIn(Conf.LabelAnimationTime * 250).
             wait(Conf.LabelAnimationTime * 750).
             to({left:(Conf.ScreenWidth + Conf.PlayAreaWidth) / 2 - 50,y:0 + 70,fontSize:100},Conf.LabelAnimationTime * 2000,"easeOutCubic");
-        //fadeOut(Conf.LabelAnimationTime * 250);
-
     }
 });
 phina.define("KeyMap",{
@@ -320,13 +388,12 @@ phina.define("MyConsole",{
     reload() {
         this.text = "";
         for(let s in this.logs)this.text += this.logs[this.logs.length - s - 1] + "\n";
-        console.log(this.logs);
     }
 });
 //Main
 phina.main(function() {
     let app = GameApp({
-        startLabel:!Conf.Debug ? "PhinaSplash" : "Game",
+        startLabel:!Conf.Debug ? "PhinaSplash" : Conf.DebugSettings.target_scene,
         assets:Assets,
         width:Conf.ScreenWidth,
         height:Conf.ScreenHeight,
