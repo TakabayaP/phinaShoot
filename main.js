@@ -76,7 +76,9 @@ phina.define("GameScene",{
         if(Conf.Debug)this.debug();
     },
     debug() {
-        Enemy().addChildTo(this.gameLayer).setPosition(Conf.GameGrid.center(),Conf.GameGrid.center());
+        Enemy().
+            addChildTo(this.gameLayer).
+            setPosition(Conf.GameGrid.center(),Conf.GameGrid.center());
         StageLabel("test").addChildTo(this.uiLayer);
         //KeyMap(this.players).addChildTo(this.uiLayer);
         this.console = MyConsole().addChildTo(this.uiLayer);
@@ -89,7 +91,8 @@ phina.define("GameScene",{
         let backGrounds = [];
         for(let i = 0;i <= 1;i++) {
             backGrounds.push(new Background({image:image}).addChildTo(parent));
-            backGrounds[i].setPosition(0,Conf.PlayAreaHeight - backGrounds[i].height * i);
+            backGrounds[i].
+                setPosition(0,Conf.PlayAreaHeight - backGrounds[i].height * i);
         }
     },
     addUiBackground(parent) {
@@ -127,10 +130,17 @@ phina.define("MainMenuScene",{
     init(options) {
         this.superInit(options);
         this.selectedNum = 0;
+        this.selected = false;
+        this.menuList = [["Start","Game"],["TEST","null"]];
         this.createBackground("black","#2727A4");
         this.addTitle();
-        this.addMenu([["Start","StageSelect"]]);
+        this.addMenu(this.menuList);
+        this.pointer = Pointer(this.labels[this.selectedNum]).addChildTo(this);
+        this.setLabelColor();
         this.setAnimation();    
+    },
+    update(app) {
+        this.movePointer(app.keyboard);
     },
     createBackground(colour1,colour2) {
         const grad = Canvas.createLinearGradient(0, 0, 0,Conf.ScreenHeight);
@@ -170,15 +180,6 @@ phina.define("MainMenuScene",{
                 y:this.gridY.span(7 + i * 3),
             }).addChildTo(this);
         }
-        this.pointer = TriangleShape({
-            fill:"blue",
-            radius:30,
-            x:this.labels[this.selectedNum].left,
-            y:this.labels[this.selectedNum].y,
-            rotation:90,
-            origin:(1,0.5),
-            stroke:"transparent",
-        }).addChildTo(this);
     },
     setAnimation() {
         this.title.tweener.clear()
@@ -187,9 +188,60 @@ phina.define("MainMenuScene",{
             .call(()=>this.subTitle.tweener.fadeIn(1000));
         
         this.pointer.tweener.fadeOut(250).fadeIn(250).setLoop(true);
+    },
+    moveScene(scene) {
+        RectangleShape({
+            width:Conf.ScreenWidth,
+            height:Conf.ScreenHeight,
+            fill:"black",
+            x:this.gridX.center(),
+            y:this.gridY.center(),
+        }).addChildTo(this)
+            .tweener.set({alpha:0})
+            .fadeIn(1000)
+            .call(()=>this.exit(scene));
+    },
+    setLabelColor() {
+        (this.menuList.length).times(i=>{
+            if(i == this.selectedNum)this.labels[i].fill = "yellow";
+            else this.labels[i].fill = "white";
+        });
+    },
+    movePointer(key) {
+        if(key.getKeyDown("up") && this.selectedNum > 0 && !this.selected) {
+            this.selectedNum--;
+            this.setLabelColor();
+            this.pointer.move(this.labels[this.selectedNum]);
+        }
+        if(key.getKeyDown("down") && this.selectedNum < this.labels.length - 1 && !this.selected) {
+            this.selectedNum++;
+            this.setLabelColor();
+            this.pointer.move(this.labels[this.selectedNum]);
+        }
+        if(key.getKeyDown("enter")) {
+            this.selected = true;
+            this.moveScene(this.menuList[this.selectedNum][1]);
+        }
     }
 });
 //Components
+phina.define("Pointer",{
+    superClass:"TriangleShape",
+    init(label) {
+        this.superInit({
+            fill:"blue",
+            radius:30,
+            x:label.left,
+            y:label.y,
+            rotation:90,
+            origin:(1,0.5),
+            stroke:"transparent",
+        });
+    },
+    move(label) {
+        this.setPosition(label.left,label.y);
+    }
+});
 phina.define("Background",{
     superClass:"Sprite",
     init(options) {
