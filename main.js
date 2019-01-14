@@ -64,12 +64,12 @@ const Assets = {
 //Scenes
 phina.define("GameScene",{
     superClass:"DisplayScene",
-    init(options) {
+    init (options) {
         this.options = (options || {}).$safe(GameScene.defaults);
         this.superInit(this.options);
         this.players = [];
         this.backgroundColor = "black";
-        if(Conf.Debug)this.enableDebug();
+        (Conf.Debug) && this.enableDebug();
         this.stage = this.getStage(this.options.stage);
         this.gameLayer = DisplayElement().addChildTo(this);
         this.addBackground(this.gameLayer,this.stage.info.background);
@@ -77,9 +77,9 @@ phina.define("GameScene",{
         this.playerBulletLayer = DisplayElement().addChildTo(this.gameLayer);
         this.addUiBackground(this.uiLayer);
         this.addPlayers(this.gameLayer);
-        if(Conf.Debug)this.debug();
+        (Conf.Debug) && this.debug();
     },
-    debug() {
+    debug () {
         Enemy().
             addChildTo(this.gameLayer).
             setPosition(Conf.GameGrid.center(),Conf.GameGrid.center());
@@ -87,7 +87,7 @@ phina.define("GameScene",{
         //KeyMap(this.players).addChildTo(this.uiLayer);
         this.console = MyConsole().addChildTo(this.uiLayer);
     },
-    enableDebug() {
+    enableDebug () {
         this.options.stage = Conf.DebugSettings.target_stage;
     },
     getStage:stage=>Conf.Stages[stage - 1],
@@ -99,7 +99,7 @@ phina.define("GameScene",{
                 setPosition(0,Conf.PlayAreaHeight - backGrounds[i].height * i);
         }
     },
-    addUiBackground(parent) {
+    addUiBackground (parent) {
         let grad = Canvas.createLinearGradient(0, 300, 0,-200);
         grad.addColorStop(0,"black");
         grad.addColorStop(1,"#2727A4");
@@ -112,7 +112,7 @@ phina.define("GameScene",{
             strokeWidth:0,
         }).setOrigin(0,0).addChildTo(parent);
     },
-    addPlayers(parent) {
+    addPlayers (parent) {
         for(let i = 0;i < this.options.playerNumber;i++) {
             this.players[i] = Player({
                 no:i,
@@ -120,7 +120,7 @@ phina.define("GameScene",{
             }).addChildTo(parent).addHeart(parent);
         }
     },
-    update(app) {
+    update (app) {
         this.console.log(app.frame);
     },
     _static:{
@@ -131,11 +131,11 @@ phina.define("GameScene",{
 });
 phina.define("MainMenuScene",{
     superClass:"DisplayScene",
-    init(options) {
+    init (options) {
         this.superInit(options);
         this.selectedNum = 0;
         this.selected = false;
-        this.menuList = [["Start","Game"],["TEST","null"]];
+        this.menuList = [["Start","StageSelect"],["TEST","null"]];
         this.createBackground("black","#2727A4");
         this.addTitle();
         this.addMenu(this.menuList);
@@ -143,16 +143,16 @@ phina.define("MainMenuScene",{
         this.setLabelColor();
         this.setAnimation();
     },
-    update(app) {
+    update (app) {
         this.movePointer(app.keyboard);
     },
-    createBackground(colour1,colour2) {
+    createBackground (colour1,colour2) {
         const grad = Canvas.createLinearGradient(0, 0, 0,Conf.ScreenHeight);
         grad.addColorStop(0.5, colour1);
         grad.addColorStop(1, colour2);
         this.backgroundColor = grad;
     },
-    addTitle() {
+    addTitle () {
         this.title = Label({
             text:"REBELLION FORCE",
             fill:"yellow",
@@ -170,7 +170,7 @@ phina.define("MainMenuScene",{
             y:this.gridY.span(4),
         }).addChildTo(this);
     },
-    addMenu(menuList) {
+    addMenu (menuList) {
         this.labels = [];
         for(let i in menuList) {
             this.labels[i] = Label({
@@ -185,7 +185,7 @@ phina.define("MainMenuScene",{
             }).addChildTo(this);
         }
     },
-    setAnimation() {
+    setAnimation () {
         this.title.tweener.clear()
             .call(()=>this.title.alpha = 0,this.subTitle.alpha = 0)
             .fadeIn(3000)
@@ -193,7 +193,7 @@ phina.define("MainMenuScene",{
         
         this.pointer.tweener.fadeOut(250).fadeIn(250).setLoop(true);
     },
-    moveScene(scene) {
+    moveScene (scene) {
         RectangleShape({
             width:Conf.ScreenWidth,
             height:Conf.ScreenHeight,
@@ -205,13 +205,13 @@ phina.define("MainMenuScene",{
             .fadeIn(1000)
             .call(()=>this.exit(scene));
     },
-    setLabelColor() {
+    setLabelColor () {
         (this.menuList.length).times(i=>{
             if(i == this.selectedNum)this.labels[i].fill = "yellow";
             else this.labels[i].fill = "white";
         });
     },
-    movePointer(key) {
+    movePointer (key) {
         if(key.getKeyDown("up") && this.selectedNum > 0 && !this.selected) {
             this.selectedNum--;
             this.setLabelColor();
@@ -230,7 +230,7 @@ phina.define("MainMenuScene",{
 });
 phina.define("StageSelectScene",{
     superClass:"DisplayScene",
-    init:function(options) {
+    init:function (options) {
         this.superInit(options);
         this.createBackground("black","#2727A4");
         this.fadeIn();
@@ -240,43 +240,30 @@ phina.define("StageSelectScene",{
         this.setAnimation();
         this.addBackButton("MainMenu");
     },
-    update(app) {
+    update (app) {
         this.movePointer(app.keyboard);
     },
     /*
     update:function(app) {
-        key = app.keyboard;
        if(key.getKeyDown("enter")) {
             if(this.selectnum >= StageNumber)this.app.pushScene(AlertScene(this.options,"このステージはまだ開放されていません"));
             else {
-                this.selected = true;
-                var self = this;
-                self.selectedNum = self.selectNum;
-                var fillrect = RectangleShape({
-                    width:Screen_Width * 2,
-                    height:Screen_Height * 2,
-                    fill:"black",
-                    x:self.gridX.center(),
-                    y:self.gridY.center(),}).addChildTo(self);
-                fillrect.alpha = 0;
-                fillrect.tweener.fadeIn(1000).call(function() {
-                    self.exit("Stage",{stage:self.selectedNum + 1,multi:self.multi});
-                });
+                
             }
         }
-        if(key.getKeyDown("escape"))this.exit("MainMenu");
+        
         (StageNumber).times(function(i) {
             if(i == this.selectNum)this.labels[i].fill = "yellow";
             else{this.labels[i].fill = "white";}
         },this);
     },*/
-    createBackground(colour1,colour2) {
+    createBackground (colour1,colour2) {
         const grad = Canvas.createLinearGradient(0, 0, 0,Conf.ScreenHeight);
         grad.addColorStop(0.5, colour1);
         grad.addColorStop(1, colour2);
         this.backgroundColor = grad;
     },
-    fadeIn() {
+    fadeIn () {
         RectangleShape({
             width:Conf.ScreenWidth,
             height:Conf.ScreenHeight,
@@ -287,7 +274,7 @@ phina.define("StageSelectScene",{
             .tweener
             .fadeOut(1000);
     },
-    addToggleButton() {
+    addToggleButton () {
         this.isMultiPlayer = false;
         RectangleShape({
             width:this.gridX.span(10),
@@ -311,7 +298,7 @@ phina.define("StageSelectScene",{
             y:this.gridY.span(10),
         }).addChildTo(this);
     },
-    addMenu() {
+    addMenu () {
         this.selectedNum = 0;
         this.selected = false;
         this.menuItems = [];
@@ -335,10 +322,10 @@ phina.define("StageSelectScene",{
         }); 
         this.setLabelColor();
     },
-    setAnimation() {
+    setAnimation () {
         this.pointer.tweener.fadeOut(250).fadeIn(250).setLoop(true);
     },
-    addBackButton(scene) {
+    addBackButton (scene) {
         TriangleShape({
             x:this.gridX.span(1),
             y:this.gridY.span(1),
@@ -352,41 +339,66 @@ phina.define("StageSelectScene",{
             .onpointstart = ()=>this.exit(scene);
 
     },
-    setLabelColor() {
+    setLabelColor () {
         (this.menuItems.length).times(i=>{
             if(i == this.selectedNum)this.menuItems[i].fill = "yellow";
             else this.menuItems[i].fill = "white";
         });
     },
-    movePointer(key) {
-        
-        if(key.getKeyDown("left") && this.selectedNum > 0 && !this.selected) {
+    movePointer (key) {
+        if(key.getKeyDown("left") 
+            && this.selectedNum > 0 
+            && !this.selected) {
             this.selectedNum --;
             this.setLabelColor();
             this.pointer.move(this.menuItems[this.selectedNum]);
             
         }
-        if(key.getKeyDown("right") && this.selectedNum < this.menuItems.length - 1 && !this.selected) {
+        if(key.getKeyDown("right") 
+            && this.selectedNum < this.menuItems.length - 1 
+            && !this.selected) {
             this.selectedNum ++;
             this.setLabelColor();
             this.pointer.move(this.menuItems[this.selectedNum]);
         }
-        if(key.getKeyDown("up") && this.selectedNum - 7 >= 0 && !this.selected) {
+        if(key.getKeyDown("up") 
+            && this.selectedNum - 7 >= 0 
+            && !this.selected) {
             this.selectedNum -= 7;
             this.setLabelColor();
             this.pointer.move(this.menuItems[this.selectedNum]);
         }
-        if(key.getKeyDown("down") && this.selectedNum + 7 < this.menuItems.length && !this.selected) {
+        if(key.getKeyDown("down") 
+            && this.selectedNum + 7 < this.menuItems.length 
+            && !this.selected) {
             this.selectedNum += 7;
             this.setLabelColor();
             this.pointer.move(this.menuItems[this.selectedNum]);
         }
+        (key.getKeyDown("escape")) && this.exit("MainMenu");
+        if(key.getKey("enter")) {
+            this.selected = true;
+            this.moveScene("Game",{stage:this.selectedNum + 1,isMultiPlayer:this.isMultiPlayer});
+        }
+    },
+    moveScene (scene,options) {
+        this.options = options || {};
+        RectangleShape({
+            width:Conf.ScreenWidth,
+            height:Conf.ScreenHeight,
+            fill:"black",
+            x:this.gridX.center(),
+            y:this.gridY.center(),
+        }).addChildTo(this)
+            .tweener.set({alpha:0})
+            .fadeIn(1000)
+            .call(()=>this.exit(scene,this.options));
     }
 });
 //Components
 phina.define("Pointer",{
     superClass:"TriangleShape",
-    init(label) {
+    init (label) {
         this.superInit({
             fill:"blue",
             radius:30,
@@ -397,13 +409,13 @@ phina.define("Pointer",{
             stroke:"transparent",
         });
     },
-    move(label) {
+    move (label) {
         this.setPosition(label.left,label.y);
     }
 });
 phina.define("Background",{
     superClass:"Sprite",
-    init(options) {
+    init (options) {
         this.options = (options || {}).$safe(Background.defaults);
         this.superInit(options.image);
         this.width = Conf.PlayAreaWidth;
@@ -413,28 +425,29 @@ phina.define("Background",{
         defaults:{
         }
     },
-    update() {
+    update () {
         this.y += Conf.ScrollSpeed;
-        if(this.y >= this.height + Conf.PlayAreaHeight) {
-            this.y = Conf.PlayAreaHeight - this.height;
-        }
+        if(this.y >= this.height + Conf.PlayAreaHeight)this.y = Conf.PlayAreaHeight - this.height;
     },
 });
 phina.define("Player",{
     superClass:"Sprite",
-    init(options) {
+    init (options) {
         this.options = (options || {}).$safe(Player.defaults);
         this.superInit(this.options.images.player[this.options.no]);
         this.setPosition(
-            Conf.GameGrid.center(this.options.initialPositions[this.options.players - 1][this.options.no][0]),
-            Conf.GameGrid.center(this.options.initialPositions[this.options.players - 1][this.options.no][1]));
+            Conf.GameGrid.center
+            (this.options.initialPositions[this.options.players - 1][this.options.no][0]),
+            Conf.GameGrid.center
+            (this.options.initialPositions[this.options.players - 1][this.options.no][1]));
         //this.addHeart(this.parent);
     },
-    update(app) {
+    update (app) {
         this.move(app);
-        if(app.frame % (Conf.Fps / 5) === 0)this.shoot(app.currentScene[this.options.bullet.bulletLayer]);
+        (app.frame % (Conf.Fps / 5) === 0)
+            && this.shoot(app.currentScene[this.options.bullet.bulletLayer]);
     },
-    move({keyboard:key}) {
+    move ({keyboard:key}) {
         const{keys,speed,no:n} = this.options;
         if(key.getKey(keys.right[n])) {
             if(this.right + speed < Conf.PlayAreaWidth)this.x += speed;
@@ -453,13 +466,13 @@ phina.define("Player",{
             else this.bottom = Conf.PlayAreaHeight;
         }
     },
-    shoot(parent) {
+    shoot (parent) {
         for(let i = 1;i <= this.options.bullet.bulletNumber / 2;i++) {
             PlayerBullet(this.x - this.options.bullet.bulletInterval * i,this.y).addChildTo(parent);
             PlayerBullet(this.x + this.options.bullet.bulletInterval * i,this.y).addChildTo(parent);
         }
     },
-    addHeart(parent) {
+    addHeart (parent) {
         this.heart = Heart(this).addChildTo(parent);
     },
     _static:{
@@ -492,10 +505,10 @@ phina.define("Player",{
 });
 phina.define("Enemy",{
     superClass:"Sprite",
-    init() {
+    init () {
         this.superInit("Enemy1");
     },
-    setGauge() {
+    setGauge () {
         this.hpGauge = Gauge({
             x: this.x, 
             y: this.top,
@@ -518,29 +531,33 @@ phina.define("Enemy",{
 });
 phina.define("Heart",{
     superClass:"CircleShape",
-    init(player) {
+    init (player) {
         this.superInit();
         this.player = player;
         this.radius = Conf.heartRadius;
         this.fill = "#850101";
         this.strokeWidth = 0;
     },
-    update() {
+    update () {
         this.setPosition(this.player.x,this.player.y);
     }
 });
 phina.define("PlayerBullet",{
     superClass:"Sprite",
-    init(x,y,options) {
+    init (x,y,options) {
         this.options = (options || {}).$safe(PlayerBullet.defaults);
         this.superInit(this.options.image);
         this.width = this.options.width;
         this.speed = this.options.speed;
         this.setPosition(x,y);
     },
-    update() {
+    update () {
         this.y -= this.speed;
-        (this.left > Conf.PlayAreaWidth || this.right < 0 || this.top > Conf.PlayAreaHeight || this.bottom < 0) && this.remove();
+        (this.left > Conf.PlayAreaWidth 
+            || this.right < 0 
+            || this.top > Conf.PlayAreaHeight 
+            || this.bottom < 0) 
+            && this.remove();
     },
     _static:{
         defaults:{
@@ -553,7 +570,7 @@ phina.define("PlayerBullet",{
 //UIs
 phina.define("StageLabel", {
     superClass: "Label",
-    init(stageName) {
+    init (stageName) {
         this.superInit(stageName);
         this.setPosition(Conf.GameGrid.center(),Conf.GameGrid.center());
         this.fontSize = 200;
@@ -569,13 +586,13 @@ phina.define("StageLabel", {
 });
 phina.define("KeyMap",{
     superClass:"DisplayElement",
-    init(players) {
+    init (players) {
         this.keys;
     }
 });
 phina.define("MyConsole",{
     superClass:"Label",
-    init:function() {
+    init:function () {
         this.superInit({
             fill:"white",
             fontFamily:"square",
@@ -591,18 +608,18 @@ phina.define("MyConsole",{
         this.setOrigin(0,0);
         this.reload();
     },
-    log(text) {
-        if(this.logs.length > this.maxLog)this.logs.shift();
+    log (text) {
+        (this.logs.length > this.maxLog) && this.logs.shift();
         this.logs.push(text);
         this.reload();
     },
-    reload() {
+    reload () {
         this.text = "";
         for(let s in this.logs)this.text += this.logs[this.logs.length - s - 1] + "\n";
     }
 });
 //Main
-phina.main(function() {
+phina.main(function () {
     let app = GameApp({
         startLabel:!Conf.Debug ? "PhinaSplash" : Conf.DebugSettings.target_scene,
         assets:Assets,
@@ -611,6 +628,6 @@ phina.main(function() {
         scenes:Conf.MyScenes,
     });
     app.fps = Conf.Fps;
-    if(Conf.Debug)app.enableStats();
+    (Conf.Debug) && app.enableStats();
     app.run();
 });
