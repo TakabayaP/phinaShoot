@@ -581,7 +581,9 @@ phina.define("StageLabel", {
             clear().
             fadeIn(Conf.LabelAnimationTime * 250).
             wait(Conf.LabelAnimationTime * 750).
-            to({left:(Conf.ScreenWidth + Conf.PlayAreaWidth) / 2 - 50,y:0 + 70,fontSize:100},Conf.LabelAnimationTime * 2000,"easeOutCubic");
+            to({left:(Conf.ScreenWidth + Conf.PlayAreaWidth) / 2 - 50,
+                y:0 + 70,fontSize:100},
+            Conf.LabelAnimationTime * 2000,"easeOutCubic");
     }
 });
 phina.define("KeyMap",{
