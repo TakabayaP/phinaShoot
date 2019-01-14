@@ -27,12 +27,16 @@ const Conf = {
         {
             label:"Game",
             className:"GameScene",
+        },
+        {
+            label:"StageSelect",
+            className:"StageSelectScene"
         }
     ],
     DebugSettings:{
         log_path:"",
         target_stage:1,
-        target_scene:"MainMenu"
+        target_scene:"StageSelect"
     },
     Stages:[
         {
@@ -137,7 +141,7 @@ phina.define("MainMenuScene",{
         this.addMenu(this.menuList);
         this.pointer = Pointer(this.labels[this.selectedNum]).addChildTo(this);
         this.setLabelColor();
-        this.setAnimation();    
+        this.setAnimation();
     },
     update(app) {
         this.movePointer(app.keyboard);
@@ -175,7 +179,7 @@ phina.define("MainMenuScene",{
                 fill:"white",
                 fontSize:80,
                 fontFamily:"square",
-                width:500,  
+                width:500,
                 x:this.gridX.center(),
                 y:this.gridY.span(7 + i * 3),
             }).addChildTo(this);
@@ -221,6 +225,161 @@ phina.define("MainMenuScene",{
         if(key.getKeyDown("enter")) {
             this.selected = true;
             this.moveScene(this.menuList[this.selectedNum][1]);
+        }
+    }
+});
+phina.define("StageSelectScene",{
+    superClass:"DisplayScene",
+    init:function(options) {
+        this.superInit(options);
+        this.createBackground("black","#2727A4");
+        this.fadeIn();
+        this.addToggleButton();
+        this.addMenu();
+        this.pointer = Pointer(this.menuItems[this.selectedNum]).addChildTo(this);
+        this.setAnimation();
+        this.addBackButton("MainMenu");
+    },
+    update(app) {
+        this.movePointer(app.keyboard);
+    },
+    /*
+    update:function(app) {
+        key = app.keyboard;
+       if(key.getKeyDown("enter")) {
+            if(this.selectnum >= StageNumber)this.app.pushScene(AlertScene(this.options,"このステージはまだ開放されていません"));
+            else {
+                this.selected = true;
+                var self = this;
+                self.selectedNum = self.selectNum;
+                var fillrect = RectangleShape({
+                    width:Screen_Width * 2,
+                    height:Screen_Height * 2,
+                    fill:"black",
+                    x:self.gridX.center(),
+                    y:self.gridY.center(),}).addChildTo(self);
+                fillrect.alpha = 0;
+                fillrect.tweener.fadeIn(1000).call(function() {
+                    self.exit("Stage",{stage:self.selectedNum + 1,multi:self.multi});
+                });
+            }
+        }
+        if(key.getKeyDown("escape"))this.exit("MainMenu");
+        (StageNumber).times(function(i) {
+            if(i == this.selectNum)this.labels[i].fill = "yellow";
+            else{this.labels[i].fill = "white";}
+        },this);
+    },*/
+    createBackground(colour1,colour2) {
+        const grad = Canvas.createLinearGradient(0, 0, 0,Conf.ScreenHeight);
+        grad.addColorStop(0.5, colour1);
+        grad.addColorStop(1, colour2);
+        this.backgroundColor = grad;
+    },
+    fadeIn() {
+        RectangleShape({
+            width:Conf.ScreenWidth,
+            height:Conf.ScreenHeight,
+            fill:"black",
+            x:this.gridX.center(),
+            y:this.gridY.center(),
+        }).addChildTo(this)
+            .tweener
+            .fadeOut(1000);
+    },
+    addToggleButton() {
+        this.isMultiPlayer = false;
+        RectangleShape({
+            width:this.gridX.span(10),
+            height:this.gridY.span(3),
+            fill:"black",
+            x:this.gridX.center(),
+            y:this.gridY.span(10),
+        })
+            .setInteractive(true)
+            .addChildTo(this)
+            .onpointstart = ()=>{
+                this.isMultiPlayer = this.isMultiPlayer ? false : true;
+                this.multiLabel.text = this.isMultiPlayer ? "マルチプレイ" : "シングルプレイ";
+            };
+        this.multiLabel = Label({
+            text:"シングルプレイ",
+            fontFamily:"misakigothic",
+            fontSize:100,
+            fill:"white",
+            x:this.gridX.center(),
+            y:this.gridY.span(10),
+        }).addChildTo(this);
+    },
+    addMenu() {
+        this.selectedNum = 0;
+        this.selected = false;
+        this.menuItems = [];
+        Label({
+            text:"ステージを選んでください",
+            fontFamily:"misakigothic",
+            fontSize:100,
+            fill:"white",
+            x:this.gridX.center(),
+            y:this.gridY.span(1),
+        }).addChildTo(this);
+        (14).times((i)=>{//Conf.Stages.length
+            this.menuItems[i] = Label({
+                text:"   " + String(i + 1),
+                fontSize:80,
+                fontFamily:"square",
+                x:this.gridX.span(i % 7 + 1) * 2,
+                y:this.gridY.span(Math.floor(i / 7 + 2) * 2),
+                fill:"white",
+            }).addChildTo(this);
+        }); 
+        this.setLabelColor();
+    },
+    setAnimation() {
+        this.pointer.tweener.fadeOut(250).fadeIn(250).setLoop(true);
+    },
+    addBackButton(scene) {
+        TriangleShape({
+            x:this.gridX.span(1),
+            y:this.gridY.span(1),
+            fill:"blue",
+            rotation:270,
+            radius:35,
+            stroke:"transparent",
+        })
+            .setInteractive(true)
+            .addChildTo(this)
+            .onpointstart = ()=>this.exit(scene);
+
+    },
+    setLabelColor() {
+        (this.menuItems.length).times(i=>{
+            if(i == this.selectedNum)this.menuItems[i].fill = "yellow";
+            else this.menuItems[i].fill = "white";
+        });
+    },
+    movePointer(key) {
+        
+        if(key.getKeyDown("left") && this.selectedNum > 0 && !this.selected) {
+            this.selectedNum --;
+            this.setLabelColor();
+            this.pointer.move(this.menuItems[this.selectedNum]);
+            
+        }
+        if(key.getKeyDown("right") && this.selectedNum < this.menuItems.length - 1 && !this.selected) {
+            this.selectedNum ++;
+            this.setLabelColor();
+            this.pointer.move(this.menuItems[this.selectedNum]);
+        }
+        if(key.getKeyDown("up") && this.selectedNum - 7 >= 0 && !this.selected) {
+            this.selectedNum -= 7;
+            this.setLabelColor();
+            this.pointer.move(this.menuItems[this.selectedNum]);
+        }
+        if(key.getKeyDown("down") && this.selectedNum + 7 < this.menuItems.length && !this.selected) {
+            this.selectedNum += 7;
+            this.setLabelColor();
+            this.pointer.move(this.menuItems[this.selectedNum]);
         }
     }
 });
