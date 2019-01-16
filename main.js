@@ -230,7 +230,7 @@ phina.define("MainMenuScene",{
 });
 phina.define("StageSelectScene",{
     superClass:"DisplayScene",
-    init:function (options) {
+    init (options) {
         this.superInit(options);
         this.createBackground("black","#2727A4");
         this.fadeIn();
@@ -437,9 +437,9 @@ phina.define("Player",{
         this.superInit(this.options.images.player[this.options.no]);
         this.setPosition(
             Conf.GameGrid.center
-            (this.options.initialPositions[this.options.players - 1][this.options.no][0]),
+            (this.options.initialPositions[this.options.players - 1][this.options.no].x),
             Conf.GameGrid.center
-            (this.options.initialPositions[this.options.players - 1][this.options.no][1]));
+            (this.options.initialPositions[this.options.players - 1][this.options.no].y));
         //this.addHeart(this.parent);
     },
     update (app) {
@@ -496,8 +496,8 @@ phina.define("Player",{
                 player:["P1","P2"]
             },
             initialPositions:[
-                [[0,3]],
-                [[-3,-3],[3,-3]],
+                [{x:0,y:3}],
+                [{x:-3,y:-3},{x:3,y:-3}],
                 //gridCenter
             ]
         }
