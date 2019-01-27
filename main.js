@@ -1,6 +1,7 @@
 "use strict";
 phina.globalize();
 //Constants
+//app.currentScene
 const Conf = {
     Debug:true,
     Fps:60,
@@ -8,8 +9,9 @@ const Conf = {
     ScreenHeight:1000,
     PlayAreaWidth:1000,
     PlayAreaHeight:1000,
-    ScrollSpeed:15,
+    ScrollSpeed:20,
     heartRadius:5,
+    playerHp:5,
     GameGrid:Grid({
         width:1000,
         columns:17,
@@ -36,15 +38,15 @@ const Conf = {
     DebugSettings:{
         log_path:"",
         target_stage:1,
-        target_scene:"StageSelect"
+        target_scene:"Game"
     },
     Stages:[
         {
             info:{
-                background:"Bg1"
+                background:"Bg1",
+                stageTimeLimit:60,
             }
         }
-        
     ]
 };
 const Assets = {
@@ -77,6 +79,7 @@ phina.define("GameScene",{
         this.playerBulletLayer = DisplayElement().addChildTo(this.gameLayer);
         this.addUiBackground(this.uiLayer);
         this.addPlayers(this.gameLayer);
+        this.addTimeLimit(this.uiLayer,this.stage.info.stageTimeLimit);
         (Conf.Debug) && this.debug();
     },
     debug () {
@@ -111,6 +114,9 @@ phina.define("GameScene",{
             fill:grad,
             strokeWidth:0,
         }).setOrigin(0,0).addChildTo(parent);
+    },
+    addTimeLimit (parent,time) {
+        TimeLimit(time).addChildTo(parent);
     },
     addPlayers (parent) {
         for(let i = 0;i < this.options.playerNumber;i++) {
@@ -207,7 +213,7 @@ phina.define("MainMenuScene",{
     },
     setLabelColor () {
         (this.menuList.length).times(i=>{
-            if(i == this.selectedNum)this.labels[i].fill = "yellow";
+            if(i === this.selectedNum)this.labels[i].fill = "yellow";
             else this.labels[i].fill = "white";
         });
     },
@@ -253,7 +259,7 @@ phina.define("StageSelectScene",{
         }
         
         (StageNumber).times(function(i) {
-            if(i == this.selectNum)this.labels[i].fill = "yellow";
+            if(i === this.selectNum)this.labels[i].fill = "yellow";
             else{this.labels[i].fill = "white";}
         },this);
     },*/
@@ -341,7 +347,7 @@ phina.define("StageSelectScene",{
     },
     setLabelColor () {
         (this.menuItems.length).times(i=>{
-            if(i == this.selectedNum)this.menuItems[i].fill = "yellow";
+            if(i === this.selectedNum)this.menuItems[i].fill = "yellow";
             else this.menuItems[i].fill = "white";
         });
     },
@@ -618,6 +624,44 @@ phina.define("MyConsole",{
     reload () {
         this.text = "";
         for(let s in this.logs)this.text += this.logs[this.logs.length - s - 1] + "\n";
+    }
+});
+phina.define("TimeLimit", {
+    superClass: "Label",
+    init: function (time) {
+        console.log(time);
+        this.superInit({
+            text:String(time),
+            originX:0,
+            originY:0,
+            fontSize:25,
+            fontFamily:"square",
+            fill:"white"
+        });
+        this.setPosition(Conf.PlayAreaWidth - this.fontSize * 3, 0);
+        
+    },
+    update: function (app) {
+        //app.currentScene.console.log("stage timelimit:" + this.text);
+        if (app.frame % Conf.Fps === 0 && Number(this.text) > 0)
+            this.text = Number(this.text - 1);
+    },
+});
+phina.define("Life", {
+    superClass: "Label",
+    init: function () {
+        /*
+        this.no = no || 0;
+        this.superInit("Player HP:" + Player_Hp);
+        this.setOrigin(0, 0);
+        this.fontSize = 50;
+        this.fontFamily = "Square";
+        this.setPosition(Play_Area_Width, 75 + 10 + this.no * 50);
+        this.fill = "white";
+        */
+    },
+    update: function () {
+        this.text = "Player" + (this.no + 1) + " HP:" + heart[this.no].hp;
     }
 });
 //Main
