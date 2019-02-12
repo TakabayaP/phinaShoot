@@ -10,8 +10,9 @@ const Conf = {
     PlayAreaWidth:1000,
     PlayAreaHeight:1000,
     ScrollSpeed:20,
-    heartRadius:5,
-    playerHp:5,
+    HeartRadius:5,
+    PlayerHp:5,
+    PlayerBulletPower:100,
     GameGrid:Grid({
         width:1000,
         columns:17,
@@ -513,6 +514,7 @@ phina.define("Enemy",{
     superClass:"Sprite",
     init () {
         this.superInit("Enemy1");
+        this.hp = 1000;
     },
     setGauge () {
         this.hpGauge = Gauge({
@@ -529,6 +531,20 @@ phina.define("Enemy",{
             strokeWidth: 0,
         });
     },
+    update (app) {
+        app.currentScene.playerBulletLayer.children.some((bullet)=>
+            (this.hitTestElement(bullet)) && this.hitBullet(bullet));
+    },
+    damage (power) {
+        this.hp -= power;
+        if(this.hp <= 0) {
+            this.remove();
+        }
+    },
+    hitBullet (bullet) {
+        bullet.remove();
+        this.damage(Conf.PlayerBulletPower);
+    },
     _static:{
         defaults:{
 
@@ -540,7 +556,7 @@ phina.define("Heart",{
     init (player) {
         this.superInit();
         this.player = player;
-        this.radius = Conf.heartRadius;
+        this.radius = Conf.HeartRadius;
         this.fill = "#850101";
         this.strokeWidth = 0;
     },
