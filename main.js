@@ -285,7 +285,7 @@ phina.define("StageSelectScene",{
     superClass:"DisplayScene",
     init (options) {
         this.superInit(options);
-        this.createBackground("black","#2727A4");
+        this.backgroundColor = "black";
         this.fadeIn();
         this.addToggleButton();
         this.addMenu();
@@ -325,6 +325,7 @@ phina.define("StageSelectScene",{
             y:this.gridY.center(),
         }).addChildTo(this)
             .tweener
+            .call(()=>this.createBackground("black","#2727A4"))
             .fadeOut(1000);
     },
     addToggleButton () {
