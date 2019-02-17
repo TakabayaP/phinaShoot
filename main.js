@@ -41,15 +41,24 @@ const Conf = {
         target_stage:1,
         target_scene:"Game"
     },
-    Stages:[
-        {
-            info:{
-                background:"Bg1",
-                stageTimeLimit:60,
-            }
-        }
-    ]
+
 };
+const Stages = [
+    {
+        info:{
+            background:"Bg1",
+            stageTimeLimit:1,
+        },
+        enemies:[
+            {
+                when:c=>c === 1,
+                class:"Enemy",
+                x:Conf.GameGrid.center(),
+                y:Conf.GameGrid.center(),
+            }
+        ]
+    }
+];
 const Assets = {
     image:{
         Bg1:"img/backgray.png",
@@ -70,23 +79,19 @@ phina.define("GameScene",{
     init (options) {
         this.options = (options || {}).$safe(GameScene.defaults);
         this.superInit(this.options);
-        this.players = [];
-        this.backgroundColor = "black";
         (Conf.Debug) && this.enableDebug();
         this.stage = this.getStage(this.options.stage);
-        this.gameLayer = DisplayElement().addChildTo(this);
-        this.addBackground(this.gameLayer,this.stage.info.background);
-        this.uiLayer = DisplayElement().addChildTo(this);
-        this.playerBulletLayer = DisplayElement().addChildTo(this.gameLayer);
+        this.players = [];
+        this.backgroundColor = "black";
+        this.count = 0;
+        this.addLayers();
+        this.addBackground(this.uiLayer,this.stage.info.background);
         this.addUiBackground(this.uiLayer);
         this.addPlayers(this.gameLayer);
         this.addTimeLimit(this.uiLayer,this.stage.info.stageTimeLimit);
         (Conf.Debug) && this.debug();
     },
     debug () {
-        Enemy().
-            addChildTo(this.gameLayer).
-            setPosition(Conf.GameGrid.center(),Conf.GameGrid.center());
         StageLabel("test").addChildTo(this.uiLayer);
         //KeyMap(this.players).addChildTo(this.uiLayer);
         this.console = MyConsole().addChildTo(this.uiLayer);
@@ -94,7 +99,13 @@ phina.define("GameScene",{
     enableDebug () {
         this.options.stage = Conf.DebugSettings.target_stage;
     },
-    getStage:stage=>Conf.Stages[stage - 1],
+    addLayers () {
+        this.uiLayer = DisplayElement().addChildTo(this);
+        this.gameLayer = DisplayElement().addChildTo(this);
+        this.playerBulletLayer = DisplayElement().addChildTo(this.gameLayer);
+        this.enemyLayer = DisplayElement().addChildTo(this.gameLayer);
+    },
+    getStage:stage=>Stages[stage - 1],
     addBackground:(parent,image)=>{
         let backGrounds = [];
         for(let i = 0;i <= 1;i++) {
@@ -129,6 +140,24 @@ phina.define("GameScene",{
     },
     update (app) {
         this.console.log(app.frame);
+        this.spawnCheck(this.count);
+        this.count++;
+        if(this.count === this.stage.info.stageTimeLimit * Conf.Fps)this.showResult();
+    },
+    spawnCheck (c) {
+        for(let no in this.stage.enemies) {
+            if(this.stage.enemies[no].when(c))this.spawn(this.stage.enemies[no]);
+        }
+    },
+    spawn (enemyInfo) {
+        window[enemyInfo.class]().addChildTo(this.enemyLayer).setPosition(Conf.GameGrid.center(),Conf.GameGrid.center());;
+    },
+    showResult () {
+        console.log("test1");
+        this.app.pushScene(ResultScene({
+            width:Conf.ScreenWidth,
+            height:Conf.ScreenHeight,
+        }));
     },
     _static:{
         defaults:{
@@ -317,7 +346,7 @@ phina.define("StageSelectScene",{
             x:this.gridX.center(),
             y:this.gridY.span(1),
         }).addChildTo(this);
-        (14).times((i)=>{//Conf.Stages.length
+        (14).times((i)=>{//Stages.length
             this.menuItems[i] = Label({
                 text:"   " + String(i + 1),
                 fontSize:80,
@@ -343,7 +372,7 @@ phina.define("StageSelectScene",{
         })
             .setInteractive(true)
             .addChildTo(this)
-            .onpointstart = ()=>this.exit(scene);
+            .onpointstart = ()=>this.moveScene(scene);
 
     },
     setLabelColor () {
@@ -400,6 +429,14 @@ phina.define("StageSelectScene",{
             .tweener.set({alpha:0})
             .fadeIn(1000)
             .call(()=>this.exit(scene,this.options));
+    }
+});
+phina.define("ResultScene",{
+    superClass:"DisplayScene",
+    init (options) {
+        this.superInit(options);
+        console.log("test");
+        this.backgroundColor = "rgba(0, 0, 0, 0.7)";
     }
 });
 //Components
@@ -532,7 +569,7 @@ phina.define("Enemy",{
         });
     },
     update (app) {
-        app.currentScene.playerBulletLayer.children.some((bullet)=>
+        (app.currentScene.playerBulletLayer) && app.currentScene.playerBulletLayer.children.some((bullet)=>
             (this.hitTestElement(bullet)) && this.hitBullet(bullet));
     },
     damage (power) {
@@ -658,7 +695,6 @@ phina.define("TimeLimit", {
         
     },
     update: function (app) {
-        //app.currentScene.console.log("stage timelimit:" + this.text);
         if (app.frame % Conf.Fps === 0 && Number(this.text) > 0)
             this.text = Number(this.text - 1);
     },
