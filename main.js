@@ -18,6 +18,7 @@ const Conf = {
         columns:17,
     }),
     LabelAnimationTime:1,
+    
     MyScenes:[
         {
             label:"PhinaSplash",
@@ -89,10 +90,11 @@ phina.define("GameScene",{
         this.addUiBackground(this.uiLayer);
         this.addPlayers(this.gameLayer);
         this.addTimeLimit(this.uiLayer,this.stage.info.stageTimeLimit);
+        StageLabel("Stage" + options.stage).addChildTo(this.uiLayer);
         (Conf.Debug) && this.debug();
     },
     debug () {
-        StageLabel("test").addChildTo(this.uiLayer);
+        
         //KeyMap(this.players).addChildTo(this.uiLayer);
         this.console = MyConsole().addChildTo(this.uiLayer);
     },
@@ -157,7 +159,22 @@ phina.define("GameScene",{
         this.app.pushScene(ResultScene({
             width:Conf.ScreenWidth,
             height:Conf.ScreenHeight,
+        },{
+            stage:this.options.stage
         }));
+        this.moveScene("MainMenu");
+    },
+    moveScene (scene) {
+        RectangleShape({
+            width:Conf.ScreenWidth,
+            height:Conf.ScreenHeight,
+            fill:"black",
+            x:this.gridX.center(),
+            y:this.gridY.center(),
+        }).addChildTo(this)
+            .tweener.set({alpha:0})
+            .fadeIn(1000)
+            .call(()=>this.exit(scene));
     },
     _static:{
         defaults:{
@@ -433,10 +450,34 @@ phina.define("StageSelectScene",{
 });
 phina.define("ResultScene",{
     superClass:"DisplayScene",
-    init (options) {
+    init (options,info) {
         this.superInit(options);
         console.log("test");
         this.backgroundColor = "rgba(0, 0, 0, 0.7)";
+        this.addLabels(this,info);
+    },
+    update (app) {
+        if(app.keyboard.getKeyDown("enter")) {
+            this.exit();
+        }
+    },
+    addLabels (parent,{stage,score,isCleared}) {
+        this.title = Label({
+            text:"Result",
+            fill:"yellow",
+            fontFamily:"arcadia",
+            fontSize:120,
+            x:this.gridX.center(),
+            y:this.gridY.span(2),
+        }).addChildTo(parent);
+        this.stageName = Label({
+            text:"Stage:" + String(stage),
+            fill:"white",
+            fontSize:100,
+            fontFamily:"square",
+            x:this.gridX.center(),
+            y:this.gridY.span(4),
+        }).addChildTo(parent);
     }
 });
 //Components
