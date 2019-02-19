@@ -18,7 +18,6 @@ const Conf = {
         columns:17,
     }),
     LabelAnimationTime:1,
-    
     MyScenes:[
         {
             label:"PhinaSplash",
@@ -44,22 +43,37 @@ const Conf = {
     },
 
 };
-const Stages = [
-    {
-        info:{
-            background:"Bg1",
-            stageTimeLimit:1,
+const Properties = {
+    Stages:[
+        {
+            info:{
+                background:"Bg1",
+                stageTimeLimit:1,
+            },
+            enemies:[
+                {
+                    when:c=>c === 1,
+                    class:"Enemy",
+                    x:Conf.GameGrid.center(),
+                    y:Conf.GameGrid.center(),
+                }
+            ]
+        }
+    ],
+    Movements:{
+        none:{
+            get:function () {}
         },
-        enemies:[
-            {
-                when:c=>c === 1,
-                class:"Enemy",
-                x:Conf.GameGrid.center(),
-                y:Conf.GameGrid.center(),
+        basic:{
+            get:function (self) {
+                if(self.speedX && self.speedY === undefined)self.speedX = self.speedY = self.speed || 1;
+                self.speedX = self.speedX || 1,
+                self.speedY = self.speedY || 1;
+                self.y += 3 * self.speed;
             }
-        ]
+        },
     }
-];
+};
 const Assets = {
     image:{
         Bg1:"img/backgray.png",
@@ -107,7 +121,7 @@ phina.define("GameScene",{
         this.playerBulletLayer = DisplayElement().addChildTo(this.gameLayer);
         this.enemyLayer = DisplayElement().addChildTo(this.gameLayer);
     },
-    getStage:stage=>Stages[stage - 1],
+    getStage:stage=>Properties.Stages[stage - 1],
     addBackground:(parent,image)=>{
         let backGrounds = [];
         for(let i = 0;i <= 1;i++) {
@@ -296,20 +310,6 @@ phina.define("StageSelectScene",{
     update (app) {
         this.movePointer(app.keyboard);
     },
-    /*
-    update:function(app) {
-       if(key.getKeyDown("enter")) {
-            if(this.selectnum >= StageNumber)this.app.pushScene(AlertScene(this.options,"このステージはまだ開放されていません"));
-            else {
-                
-            }
-        }
-        
-        (StageNumber).times(function(i) {
-            if(i === this.selectNum)this.labels[i].fill = "yellow";
-            else{this.labels[i].fill = "white";}
-        },this);
-    },*/
     createBackground (colour1,colour2) {
         const grad = Canvas.createLinearGradient(0, 0, 0,Conf.ScreenHeight);
         grad.addColorStop(0.5, colour1);
@@ -592,6 +592,7 @@ phina.define("Player",{
 phina.define("Enemy",{
     superClass:"Sprite",
     init () {
+        this.options = ({}).$safe(Enemy.defaults);
         this.superInit("Enemy1");
         this.hp = 1000;
     },
@@ -613,6 +614,7 @@ phina.define("Enemy",{
     update (app) {
         (app.currentScene.playerBulletLayer) && app.currentScene.playerBulletLayer.children.some((bullet)=>
             (this.hitTestElement(bullet)) && this.hitBullet(bullet));
+        Properties.Movements[this.options.movPattern].get(this);
     },
     damage (power) {
         this.hp -= power;
@@ -626,7 +628,7 @@ phina.define("Enemy",{
     },
     _static:{
         defaults:{
-
+            movPattern:"basic",
         }
     }
 });
