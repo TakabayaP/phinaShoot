@@ -64,19 +64,17 @@ const Properties = {
         none:{
             move:function () {}
         },
-        basic:{
-            move:function (self) {
-                if(self.speedX && self.speedY === undefined)self.speedX = self.speedY = self.speed || 1;
-                self.speedX = self.speedX || 1,
-                self.speedY = self.speedY || 1;
-                self.y += 3 * self.speed;
-            }
-        },
-        basictT:{
+        basic:[[{x:Conf.GameGrid.center()},1000,"easeInSine"],
+        [{y:Conf.GameGrid.center()},1000,"easeOutSine"]],
+        basicT:{
             tweens:[
-                ["by",{x:Conf.GameGrid.center(),y:Conf.GameGrid.center()},2000]
-            ]
-        }
+                ["to",{x:100},2000,"linear"],
+                [""]
+            ],
+        },
+        basicT2:{
+            tweens:[["to",{y:100},2000,""]]
+        },
     }
 };
 const Assets = {
@@ -601,6 +599,8 @@ phina.define("Enemy",{
         this.options = ({}).$safe(Enemy.defaults);
         this.superInit("Enemy1");
         this.hp = 1000;
+        Tweener().fromJSON(Properties.Movements.basicT).attachTo(this);
+        Tweener().fromJSON(Properties.Movements.basicT2).attachTo(this)
     },
     setGauge () {
         this.hpGauge = Gauge({
@@ -621,7 +621,6 @@ phina.define("Enemy",{
         (app.currentScene.playerBulletLayer) && app.currentScene.playerBulletLayer.children.some((bullet)=>
             (this.hitTestElement(bullet)) && this.hitBullet(bullet));
         //Properties.Movements[this.options.movPattern].move(this);
-        this.tweener.fromJSON(Properties.Movements.basictT);
     },
     damage (power) {
         this.hp -= power;
