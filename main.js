@@ -48,7 +48,7 @@ const Properties = {
         {
             info:{
                 background:"Bg1",
-                stageTimeLimit:1,
+                stageTimeLimit:10,
             },
             enemies:[
                 {
@@ -62,16 +62,21 @@ const Properties = {
     ],
     Movements:{
         none:{
-            get:function () {}
+            move:function () {}
         },
         basic:{
-            get:function (self) {
+            move:function (self) {
                 if(self.speedX && self.speedY === undefined)self.speedX = self.speedY = self.speed || 1;
                 self.speedX = self.speedX || 1,
                 self.speedY = self.speedY || 1;
                 self.y += 3 * self.speed;
             }
         },
+        basictT:{
+            tweens:[
+                ["by",{x:Conf.GameGrid.center(),y:Conf.GameGrid.center()},2000]
+            ]
+        }
     }
 };
 const Assets = {
@@ -100,7 +105,7 @@ phina.define("GameScene",{
         this.backgroundColor = "black";
         this.count = 0;
         this.addLayers();
-        this.addBackground(this.uiLayer,this.stage.info.background);
+        
         this.addUiBackground(this.uiLayer);
         this.addPlayers(this.gameLayer);
         this.addTimeLimit(this.uiLayer,this.stage.info.stageTimeLimit);
@@ -116,10 +121,11 @@ phina.define("GameScene",{
         this.options.stage = Conf.DebugSettings.target_stage;
     },
     addLayers () {
-        this.uiLayer = DisplayElement().addChildTo(this);
         this.gameLayer = DisplayElement().addChildTo(this);
+        this.addBackground(this.gameLayer,this.stage.info.background);
         this.playerBulletLayer = DisplayElement().addChildTo(this.gameLayer);
         this.enemyLayer = DisplayElement().addChildTo(this.gameLayer);
+        this.uiLayer = DisplayElement().addChildTo(this);
     },
     getStage:stage=>Properties.Stages[stage - 1],
     addBackground:(parent,image)=>{
@@ -614,7 +620,8 @@ phina.define("Enemy",{
     update (app) {
         (app.currentScene.playerBulletLayer) && app.currentScene.playerBulletLayer.children.some((bullet)=>
             (this.hitTestElement(bullet)) && this.hitBullet(bullet));
-        Properties.Movements[this.options.movPattern].get(this);
+        //Properties.Movements[this.options.movPattern].move(this);
+        this.tweener.fromJSON(Properties.Movements.basictT);
     },
     damage (power) {
         this.hp -= power;
